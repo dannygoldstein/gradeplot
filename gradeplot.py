@@ -4,10 +4,9 @@ __whatami__ = 'Utility for plotting colorful grade histograms.'
 __author__ = 'Danny Goldstein <dgold@berkeley.edu>'
 
 
-def plot_colorful(grade_array, grade_boundaries, plotfile_name,
-                  title='Student Grades', x_tight=False, **plot_kwargs):
-    """Plot a histogram of student grades, color-coded by letter grade,
-    and save it as a pdf.
+def plot_colorful(grade_array, grade_boundaries, title='Student Grades',
+                  x_tight=False, **plot_kwargs):
+    """Plot a histogram of student grades, color-coded by letter grade.
 
     Parameters
     ----------
@@ -24,6 +23,7 @@ def plot_colorful(grade_array, grade_boundaries, plotfile_name,
           'C':(35, 40),
           'D':(30, 35),
           'F':(None, 30)}
+
     plotfile_name: str
         Name of file in which to write the plot.
     title: str
@@ -32,6 +32,11 @@ def plot_colorful(grade_array, grade_boundaries, plotfile_name,
         If true, make the x limits on the plot hug the data.
     plot_kwargs:
         Keyword arguments to be passed to the matplotlib `hist` function.
+
+    Returns
+    -------
+    fig : matplotlib Figure
+        The figure containing the histogram.
 
     """
 
@@ -117,3 +122,4 @@ def plot_colorful(grade_array, grade_boundaries, plotfile_name,
         sns.set_context('talk')
     fig.tight_layout()
     fig.savefig(plotfile_name, format='pdf')
+    return fig
