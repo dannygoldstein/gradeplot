@@ -1,66 +1,50 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-__all__     = ['plot_colorful']
-__whatami__ = 'Utility for plotting colorful student grade '\
-              'distributions that Eugene likes.'
-__author__  = 'Danny Goldstein <dgold@berkeley.edu>'
+__all__ = ['plot_colorful']
+__whatami__ = 'Utility for plotting colorful grade histograms.'
+__author__ = 'Danny Goldstein <dgold@berkeley.edu>'
 
-import matplotlib
-matplotlib.use('Agg')
-import numpy as np
-import matplotlib.pyplot as plt
-try:
-    import seaborn as sns
-    sns.set_style('ticks')
-    sb = True
-except ImportError:
-    sb = False
-from itertools import chain
-
-def _check_binedges(bin_edges, boundaries):
-    return all([boundary in bin_edges for boundary in boundaries])
-
-## Call the function below from your scripts. ##
 
 def plot_colorful(grade_array, grade_boundaries, plotfile_name,
                   title='Student Grades', x_tight=False, **plot_kwargs):
-    
     """Plot a histogram of student grades, color-coded by letter grade,
     and save it as a pdf.
 
-    Arguments
-    ---------
-    
+    Parameters
+    ----------
     grade_array : array-like, 1-d
-         Array of raw scores. 
-
-    grade_boundaries : dict 
+         Array of raw scores.
+    grade_boundaries : dict
          Dictionary mapping letter grades to a range of raw
          scores. Use None to specify an unbounded endpoint.
 
          Example:
-    
+
          {'A':(45, None),
           'B':(40, 45),
           'C':(35, 40),
           'D':(30, 35),
           'F':(None, 30)}
-    
     plotfile_name: str
-        Name of file in which to write the plot. 
-
+        Name of file in which to write the plot.
     title: str
-        Plot title. 
-
+        Plot title.
     x_tight: Boolean
         If true, make the x limits on the plot hug the data.
-
     plot_kwargs:
         Keyword arguments to be passed to the matplotlib `hist` function.
 
     """
-    
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    try:
+        import seaborn as sns
+        sns.set_style('ticks')
+        sb = True
+    except ImportError:
+        sb = False
+    from itertools import chain
+
     grade_array = np.asarray(grade_array)
 
     # Take histogram bins to be between 0 and the maximum of the grade
@@ -80,8 +64,8 @@ def plot_colorful(grade_array, grade_boundaries, plotfile_name,
     bins = np.asarray(bins)
     bins.sort()
 
-    # Draw the figure. 
-    
+    # Draw the figure.
+
     fig, ax = plt.subplots(figsize=(8, 5))
     n, bins, patches = ax.hist(grade_array, bins=bins, **plot_kwargs)
 
@@ -93,40 +77,37 @@ def plot_colorful(grade_array, grade_boundaries, plotfile_name,
 
     color_cycle = ax._get_lines.color_cycle
     iterlist = sorted(grade_boundaries.keys())
-    
+
     for letter_grade in iterlist:
-        interval = grade_boundaries[letter_grade]
+        intvl = grade_boundaries[letter_grade]
+
+        high = intvl[1] if intvl[1] is not None else np.inf
+        low = intvl[0] if intvl[0] is not None else -np.inf
 
         # Count the number of students in the interval.
-        cond = np.logical_and(
-            grade_array < interval[1] if interval[1] is not None else np.inf,
-            grade_array >= interval[0] if interval[0] is not None else -np.inf)    
-        ng  = grade_array[cond].size
+        cond = np.logical_and(grade_array < high, grade_array >= low)
+        ng = grade_array[cond].size
 
-        # Compute the legend label. 
+        # Compute the legend label.
         label = '%s (%s - %s): %d' % (letter_grade,
-                                      '' if interval[0] is None else interval[0],
-                                      '' if interval[1] is None else interval[1],
+                                      '' if intvl[0] is None else intvl[0],
+                                      '' if intvl[1] is None else intvl[1],
                                       ng)
-        
+
         # Color the patches.
         color = next(color_cycle)
         to_color = [patch for i, patch in enumerate(patches)
-                    if (bins[i] >= interval[0]
-                        if interval[0] is not None else -np.inf)
-                    and (bins[i + 1] <= interval[1]
-                         if interval[1] is not None else np.inf)]
-                    
+                    if (bins[i] >= low) and (bins[i + 1] <= high)]
+
         for patch in to_color:
             patch.set_facecolor(color)
-        
+
         if len(to_color) > 0:
             legend_labels.append(label)
             legend_handles.append(to_color[0])
 
-
     # Create plot labels.
-    
+
     ax.set_title(title)
     ax.set_xlabel('Score')
     ax.set_xlim(-.1 * gmax if not x_tight else .9 * gmin, 1.1 * gmax)
@@ -136,4 +117,3 @@ def plot_colorful(grade_array, grade_boundaries, plotfile_name,
         sns.set_context('talk')
     fig.tight_layout()
     fig.savefig(plotfile_name, format='pdf')
-    
